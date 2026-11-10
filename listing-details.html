@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Listing details on Lagos Connect.">
+<title>Listing details | Lagos Connect</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#10251c;background:#f4f8f5;line-height:1.6}
+a{text-decoration:none;color:inherit}header{height:72px;padding:0 7%;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #e8eee9}
+.logo{font-size:22px;font-weight:900;color:#087b50}.logo span{color:#10251c}.back{color:#087b50;font-weight:700;font-size:14px}
+main{max-width:1000px;margin:40px auto;padding:0 20px}.panel{background:#fff;border:1px solid #e5ece7;border-radius:16px;padding:26px;box-shadow:0 8px 25px rgba(0,0,0,.04)}
+#status{color:#68766f;text-align:center;padding:45px 10px}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.tag{background:#eaf6ed;color:#087b50;border-radius:30px;padding:6px 12px;font-size:12px;font-weight:800}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.2;margin-bottom:10px}.location{color:#68766f;margin-bottom:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.gallery img{width:100%;height:260px;object-fit:cover;border-radius:12px;background:#eef3ef}.gallery img:first-child:nth-last-child(1){grid-column:1/-1;height:380px}
+.description{white-space:pre-wrap;color:#405047;margin:20px 0}
+.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
+.detail{background:#f5f8f6;border-radius:10px;padding:13px}.detail small{display:block;color:#68766f;font-size:11px;margin-bottom:3px}.detail strong{overflow-wrap:anywhere}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.action{display:inline-block;background:#087b50;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700}.action.secondary{background:#10251c}
+.error{color:#a12b2b;text-align:center;padding:40px 10px}
+@media(max-width:600px){header{padding:0 5%}.panel{padding:18px}.gallery{grid-template-columns:1fr}.gallery img,.gallery img:first-child:nth-last-child(1){height:230px}.details{grid-template-columns:1fr}main{margin:22px auto}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="index.html">LAGOS <span>CONNECT</span></a><a class="back" href="index.html#listings">← Back to listings</a></header>
+<main><div class="panel"><div id="status">Loading listing details...</div><div id="content" hidden></div></div></main>
+<script>
+const SUPABASE_URL="https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY="sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const allowedTables=["listings","food_restaurants","property_listings","job_listings","service_listings","event_listings","shopping_listings"];
+const categoryNames={listings:"Businesses",food_restaurants:"Food & Restaurants",property_listings:"Housing",job_listings:"Jobs",service_listings:"Services",event_listings:"Events",shopping_listings:"Shopping"};
+function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+function whatsapp(number){const digits=String(number||"").replace(/\D/g,"");if(!digits)return"";return"https://wa.me/"+(digits.startsWith("0")?"234"+digits.slice(1):digits);}
+function money(value){const n=Number(value);return Number.isFinite(n)?"₦"+n.toLocaleString("en-NG"):"";}
+function addDetail(list,label,value){if(value!==null&&value!==undefined&&String(value).trim()!=="")list.push(`<div class="detail"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`);}
+function render(row,table){
+const category=categoryNames[table]||"Listing";
+const title=row.title||row.business_name||row.store_name||row.event_name||row.company_name||"Listing";
+const location=row.location||row.work_location||row.venue||"Location not provided";
+const images=Array.isArray(row.images)?row.images:[];if(!images.length&&row.image_url)images.push(row.image_url);
+const gallery=images.filter(Boolean).slice(0,5).map(url=>`<img src="${esc(url)}" alt="${esc(title)}" onerror="this.style.display='none'">`).join("");
+let fields=[];
+addDetail(fields,"Category",category);
+addDetail(fields,"Location",location);
+if(table==="listings"){addDetail(fields,"Price",row.price!==null?money(row.price):"");addDetail(fields,"Contact name",row.contact_name);}
+if(table==="food_restaurants"){addDetail(fields,"Food type",row.food_type);addDetail(fields,"Price range",row.price_range);addDetail(fields,"Opening hours",row.opening_hours);addDetail(fields,"Contact name",row.contact_name);}
+if(table==="property_listings"){addDetail(fields,"Listing type",row.listing_type);addDetail(fields,"Property type",row.property_type);addDetail(fields,"Price",row.price!==null?money(row.price):"");addDetail(fields,"Price period",row.price_period);addDetail(fields,"Bedrooms",row.bedrooms);addDetail(fields,"Bathrooms",row.bathrooms);addDetail(fields,"Contact name",row.contact_name);}
+if(table==="job_listings"){addDetail(fields,"Company",row.company_name);addDetail(fields,"Employment type",row.employment_type);addDetail(fields,"Work location",row.work_location);addDetail(fields,"Salary minimum",row.salary_min!==null?money(row.salary_min):"");addDetail(fields,"Salary maximum",row.salary_max!==null?money(row.salary_max):"");addDetail(fields,"Requirements",row.requirements);addDetail(fields,"Application deadline",row.deadline);addDetail(fields,"Application email",row.application_email);}
+if(table==="service_listings"){addDetail(fields,"Service category",row.service_category);addDetail(fields,"Price range",row.price_range);addDetail(fields,"Availability",row.availability);addDetail(fields,"Contact name",row.contact_name);}
+if(table==="event_listings"){addDetail(fields,"Event category",row.event_category);addDetail(fields,"Event date",row.event_date);addDetail(fields,"Start time",row.start_time);addDetail(fields,"End time",row.end_time);addDetail(fields,"Venue",row.venue);addDetail(fields,"Ticket price",row.ticket_price!==null?money(row.ticket_price):"");addDetail(fields,"Organizer",row.organizer_name);addDetail(fields,"Contact",row.whatsapp);}
+if(table==="shopping_listings"){addDetail(fields,"Store",row.store_name);addDetail(fields,"Shopping category",row.shopping_category);addDetail(fields,"Product",row.product_name);addDetail(fields,"Price",row.price!==null?money(row.price):"");addDetail(fields,"Delivery available",row.delivery_available===true?"Yes":row.delivery_available===false?"No":"");addDetail(fields,"Contact name",row.contact_name);}
+const phone=row.whatsapp||"";
+const applyUrl=row.application_url||"";
+const ticketUrl=row.ticket_link||"";
+const actions=[];
+if(phone)actions.push(`<a class="action" href="${esc(whatsapp(phone))}" target="_blank" rel="noopener noreferrer">Contact on WhatsApp</a>`);
+if(table==="job_listings"&&applyUrl&&/^https?:\/\//i.test(applyUrl))actions.push(`<a class="action secondary" href="${esc(applyUrl)}" target="_blank" rel="noopener noreferrer">Apply for this job</a>`);
+if(table==="job_listings"&&row.application_email)actions.push(`<a class="action secondary" href="mailto:${esc(row.application_email)}">Email application</a>`);
+if(table==="event_listings"&&ticketUrl&&/^https?:\/\//i.test(ticketUrl))actions.push(`<a class="action secondary" href="${esc(ticketUrl)}" target="_blank" rel="noopener noreferrer">Tickets / Registration</a>`);
+document.getElementById("content").innerHTML=`<div class="topline"><span class="tag">${esc(category)}</span><span class="tag">Approved listing</span></div><h1>${esc(title)}</h1><div class="location">📍 ${esc(location)}</div>${gallery?`<div class="gallery">${gallery}</div>`:""}<h2>About this listing</h2><p class="description">${esc(row.description||"No additional description was provided.")}</p><div class="details">${fields.join("")}</div><div class="actions">${actions.length?actions.join(""):"<span>Contact details are not available for this listing.</span>"}</div>`;
+document.getElementById("status").hidden=true;document.getElementById("content").hidden=false;
+}
+async function start(){
+const params=new URLSearchParams(location.search),table=params.get("table"),id=params.get("id");
+if(!allowedTables.includes(table)||!id){document.getElementById("status").innerHTML='<div class="error">This listing link is invalid. <a href="index.html#listings">Return to listings</a>.</div>';return;}
+const{data,error}=await db.from(table).select("*").eq("id",id).eq("status","approved").maybeSingle();
+if(error||!data){document.getElementById("status").innerHTML='<div class="error">We could not find this approved listing. It may have been removed. <br><a href="index.html#listings">Return to listings</a>.</div>';return;}
+render(data,table);
+}
+start();
+</script>
+</body>
+</html>

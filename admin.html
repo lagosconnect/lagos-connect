@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagos Connect | Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#17202a}
+header{background:#102b25;color:white;padding:20px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px}
+header h2{margin:0}
+button{border:0;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:bold}
+.logout{background:#fff;color:#102b25}
+main{max-width:1250px;margin:30px auto;padding:0 18px}
+.welcome{margin-bottom:25px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;margin-bottom:25px}
+.stat,.panel{background:white;padding:20px;border-radius:12px;box-shadow:0 3px 14px #0000000b}
+.stat p{color:#667;margin:0 0 10px}
+.stat h2{margin:0;font-size:28px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+select{padding:11px;border:1px solid #ddd;border-radius:7px;background:white}
+#message{margin:15px 0;color:#345}
+.submission{background:white;border:1px solid #e5e9e7;border-radius:12px;padding:18px;margin-bottom:15px}
+.submission h3{margin:0 0 8px}
+.meta{color:#667;font-size:13px;margin:6px 0}
+.description{line-height:1.5;white-space:pre-wrap}
+.photos{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
+.photos img{width:105px;height:85px;object-fit:cover;border-radius:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.approve{background:#d9f5e3;color:#126333}
+.reject{background:#fff0d9;color:#875400}
+.delete{background:#ffe0e0;color:#a21c1c}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;background:#eee}
+.empty{padding:35px;text-align:center;color:#667;background:white;border-radius:12px}
+#loading{text-align:center;padding:40px}
+@media(max-width:600px){header{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+
+<body>
+<header>
+  <h2>Lagos Connect Admin</h2>
+  <button class="logout" id="logoutBtn">Log out</button>
+</header>
+
+<main>
+  <div class="welcome">
+    <h1>Dashboard</h1>
+    <p>Manage listings submitted to Lagos Connect.</p>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><p>Total submissions</p><h2 id="totalCount">0</h2></div>
+    <div class="stat"><p>Pending review</p><h2 id="pendingCount">0</h2></div>
+    <div class="stat"><p>Approved</p><h2 id="approvedCount">0</h2></div>
+    <div class="stat"><p>Rejected</p><h2 id="rejectedCount">0</h2></div>
+  </section>
+
+  <section class="panel">
+    <h2>Manage submissions</h2>
+    <div class="toolbar">
+      <select id="categoryFilter">
+        <option value="all">All categories</option>
+        <option value="listings">Businesses</option>
+        <option value="food_restaurants">Food & Restaurants</option>
+        <option value="property_listings">Housing</option>
+        <option value="job_listings">Jobs</option>
+        <option value="service_listings">Services</option>
+        <option value="event_listings">Events</option>
+        <option value="shopping_listings">Shopping</option>
+      </select>
+
+      <select id="statusFilter">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <button id="refreshBtn">Refresh</button>
+    </div>
+    <p id="message"></p>
+    <div id="loading">Checking your administrator access...</div>
+    <div id="submissions"></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const tables = [
+  {name:"listings", label:"Business"},
+  {name:"food_restaurants", label:"Food & Restaurant"},
+  {name:"property_listings", label:"Housing"},
+  {name:"job_listings", label:"Job"},
+  {name:"service_listings", label:"Service"},
+  {name:"event_listings", label:"Event"},
+  {name:"shopping_listings", label:"Shopping"}
+];
+
+let allSubmissions = [];
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[char]);
+}
+
+function getTitle(row) {
+  return row.title || row.business_name || row.store_name ||
+    row.event_name || row.company_name || row.product_name ||
+    "Untitled submission";
+}
+
+function getDescription(row) {
+  return row.description || "No description provided.";
+}
+
+function getImages(row) {
+  const images = Array.isArray(row.images) ? row.images : [];
+  if (row.image_url) images.unshift(row.image_url);
+  return [...new Set(images)].filter(Boolean);
+}
+
+async function checkAdmin() {
+  const {data:{session}, error} = await db.auth.getSession();
+
+  if (error || !session) {
+    window.location.href = "account.html";
+    return;
+  }
+
+  const {data:profile, error:profileError} = await db
+    .from("profiles")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+
+  if (profileError || !profile || profile.role !== "admin") {
+    document.getElementById("loading").textContent =
+      "Access denied. This account is not an administrator.";
+    return;
+  }
+
+  document.getElementById("loading").style.display = "none";
+  await loadSubmissions();
+}
+
+async function loadSubmissions() {
+  const message = document.getElementById("message");
+  message.textContent = "Loading submissions...";
+
+  let results = [];
+
+  for (const table of tables) {
+    const {data, error} = await db
+      .from(table.name)
+      .select("*")
+      .order("created_at", {ascending:false});
+
+    if (error) {
+      console.error("Error loading " + table.name, error);
+      message.textContent =
+        "Some listings could not be loaded. Check the browser console.";
+      continue;
+    }
+
+    (data || []).forEach(row => {
+      results.push({
+        ...row,
+        _table:table.name,
+        _label:table.label
+      });
+    });
+  }
+
+  allSubmissions = results;
+  updateStats();
+  renderSubmissions();
+  if (!message.textContent.startsWith("Some")) {
+    message.textContent = "Dashboard updated.";
+  }
+}
+
+function updateStats() {
+  document.getElementById("totalCount").textContent = allSubmissions.length;
+  document.getElementById("pendingCount").textContent =
+    allSubmissions.filter(x => x.status === "pending").length;
+  document.getElementById("approvedCount").textContent =
+    allSubmissions.filter(x => x.status === "approved").length;
+  document.getElementById("rejectedCount").textContent =
+    allSubmissions.filter(x => x.status === "rejected").length;
+}
+
+function renderSubmissions() {
+  const category = document.getElementById("categoryFilter").value;
+  const status = document.getElementById("statusFilter").value;
+
+  const filtered = allSubmissions.filter(row =>
+    (category === "all" || row._table === category) &&
+    (status === "all" || row.status === status)
+  );
+
+  const container = document.getElementById("submissions");
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty">No submissions found in this filter.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(row => {
+    const photos = getImages(row).map(url =>
+      `<a href="${escapeHTML(url)}" target="_blank" rel="noopener">
+        <img src="${escapeHTML(url)}" alt="Listing photo">
+      </a>`
+    ).join("");
+
+    const date = row.created_at
+      ? new Date(row.created_at).toLocaleString()
+      : "Date unavailable";
+
+    return `
+      <article class="submission">
+        <h3>${escapeHTML(getTitle(row))}</h3>
+        <span class="status">${escapeHTML(row.status || "unknown")}</span>
+        <p class="meta">${escapeHTML(row._label)} · ${escapeHTML(date)}</p>
+        <p class="meta">Location: ${escapeHTML(row.location || "Not provided")}</p>
+        <p class="description">${escapeHTML(getDescription(row))}</p>
+        <p class="meta">Contact: ${escapeHTML(row.whatsapp || row.contact_name || "Not provided")}</p>
+        ${photos ? `<div class="photos">${photos}</div>` : ""}
+        <div class="actions">
+          <button class="approve" data-action="approve"
+            data-table="${escapeHTML(row._table)}"
+            data-id="${escapeHTML(row.id)}">Approve</button>
+          <button class="reject" data-action="reject"
+            data-table="${escapeHTML(row._table)}"
+            data-id="${escapeHTML(row.id)}">Reject</button>
+          <button class="delete" data-action="delete"
+            data-table="${escapeHTML(row._table)}"
+            data-id="${escapeHTML(row.id)}">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function changeListing(table, id, action) {
+  const message = document.getElementById("message");
+
+  if (action === "delete" &&
+      !confirm("Are you sure you want to permanently delete this listing?")) {
+    return;
+  }
+
+  message.textContent = "Updating listing...";
+
+  let result;
+
+  if (action === "delete") {
+    result = await db.from(table).delete().eq("id", id);
+  } else {
+    const newStatus = action === "approve" ? "approved" : "rejected";
+    result = await db.from(table).update({status:newStatus}).eq("id", id);
+  }
+
+  if (result.error) {
+    console.error(result.error);
+    message.textContent = "Could not update listing: " + result.error.message;
+    return;
+  }
+
+  message.textContent = "Listing updated successfully.";
+  await loadSubmissions();
+}
+
+document.getElementById("submissions").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  changeListing(
+    button.dataset.table,
+    button.dataset.id,
+    button.dataset.action
+  );
+});
+
+document.getElementById("categoryFilter").addEventListener("change", renderSubmissions);
+document.getElementById("statusFilter").addEventListener("change", renderSubmissions);
+document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await db.auth.signOut();
+  window.location.href = "account.html";
+});
+
+checkAdmin();
+</script>
+</body>
+</html>

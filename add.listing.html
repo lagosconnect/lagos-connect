@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add a Listing | Lagos Connect</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#172c25}
+header{background:#102b25;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center}
+header a{color:white;text-decoration:none}
+main{max-width:850px;margin:35px auto;padding:0 16px}
+.panel{background:white;padding:28px;border-radius:14px;box-shadow:0 4px 20px #0000000b}
+h1{margin-top:0}
+.intro{color:#65746d;line-height:1.6}
+label{display:block;font-weight:bold;margin:17px 0 7px}
+input,select,textarea{width:100%;padding:13px;border:1px solid #d7dfda;border-radius:8px;font-size:15px;background:white}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #b4d9c5;border-color:#237c4e}
+button{border:0;border-radius:8px;padding:14px 20px;background:#176b42;color:white;font-size:15px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.submit{width:100%;margin-top:24px}
+.note{background:#edf7f0;padding:13px;border-radius:8px;color:#315d43;font-size:13px;line-height:1.5;margin-top:18px}
+#message{margin-top:18px;line-height:1.5;white-space:pre-wrap}
+.success{color:#16713c}
+.error{color:#b42318}
+#loading{text-align:center;padding:30px}
+.file-note{font-size:13px;color:#66756d;margin-top:7px}
+@media(max-width:550px){.panel{padding:20px}header{padding:16px}}
+</style>
+</head>
+
+<body>
+<header>
+  <strong>Lagos Connect</strong>
+  <a href="index.html">Back to homepage</a>
+</header>
+
+<main>
+  <section class="panel">
+    <h1>Add a Listing</h1>
+    <p class="intro">Promote your business, property, service, job opportunity, event or products to people across Lagos.</p>
+
+    <div id="loading">Checking your account...</div>
+
+    <form id="listingForm" style="display:none">
+      <label for="category">What would you like to list?</label>
+      <select id="category" required>
+        <option value="listings">Business</option>
+        <option value="food_restaurants">Food & Restaurants</option>
+        <option value="property_listings">Housing / Property</option>
+        <option value="job_listings">Jobs</option>
+        <option value="service_listings">Services</option>
+        <option value="event_listings">Events</option>
+        <option value="shopping_listings">Shopping / Products</option>
+      </select>
+
+      <div id="dynamicFields"></div>
+
+      <label for="photos">Upload photos</label>
+      <input id="photos" type="file" accept="image/*" multiple>
+      <p class="file-note">You can select up to 5 photos. Maximum 5MB per photo.</p>
+
+      <div class="note">
+        Your submission will first be reviewed by the Lagos Connect administrator. It will not be approved automatically.
+      </div>
+
+      <button class="submit" id="submitBtn" type="submit">Submit Listing</button>
+    </form>
+
+    <div id="message"></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+const fieldSets = {
+  listings: [
+    ["title","Business name","text",true],
+    ["category","Business category","text",true],
+    ["location","Business location in Lagos","text",true],
+    ["description","Business description","textarea",false],
+    ["price","Price (optional)","number",false],
+    ["contact_name","Contact person's name","text",false],
+    ["whatsapp","WhatsApp number","tel",false]
+  ],
+
+  food_restaurants: [
+    ["business_name","Restaurant / Food business name","text",true],
+    ["food_type","Food type","text",true],
+    ["location","Restaurant location","text",true],
+    ["description","Description / Menu details","textarea",false],
+    ["price_range","Price range","text",false],
+    ["opening_hours","Opening hours","text",false],
+    ["contact_name","Contact person's name","text",false],
+    ["whatsapp","WhatsApp number","tel",true]
+  ],
+
+  property_listings: [
+    ["title","Property title","text",true],
+    ["listing_type","For sale or for rent?","text",true],
+    ["property_type","Property type","text",true],
+    ["location","Property location","text",true],
+    ["price","Price in Naira","number",false],
+    ["price_period","Payment period (e.g. monthly or yearly)","text",false],
+    ["bedrooms","Number of bedrooms","number",false],
+    ["bathrooms","Number of bathrooms","number",false],
+    ["description","Property description","textarea",true],
+    ["contact_name","Contact person's name","text",true],
+    ["whatsapp","WhatsApp number","tel",true]
+  ],
+
+  job_listings: [
+    ["title","Job title","text",true],
+    ["company_name","Company name","text",true],
+    ["employment_type","Employment type","text",true],
+    ["work_location","Job location","text",true],
+    ["salary_min","Minimum salary (Naira)","number",false],
+    ["salary_max","Maximum salary (Naira)","number",false],
+    ["description","Job description","textarea",true],
+    ["requirements","Job requirements","textarea",false],
+    ["application_email","Application email","email",false],
+    ["application_url","Application website / link","url",false],
+    ["whatsapp","WhatsApp number","tel",false],
+    ["deadline","Application deadline","date",false]
+  ],
+
+  service_listings: [
+    ["business_name","Business / Service provider name","text",true],
+    ["service_category","Type of service","text",true],
+    ["location","Service location","text",true],
+    ["description","Describe your service","textarea",true],
+    ["price_range","Price range","text",false],
+    ["contact_name","Contact person's name","text",true],
+    ["whatsapp","WhatsApp number","tel",true],
+    ["availability","Availability / Working hours","text",false]
+  ],
+
+  event_listings: [
+    ["event_name","Event name","text",true],
+    ["event_category","Event category","text",true],
+    ["event_date","Event date","date",true],
+    ["start_time","Starting time","time",false],
+    ["end_time","Ending time","time",false],
+    ["venue","Event venue","text",true],
+    ["location","Event location","text",true],
+    ["description","Event description","textarea",true],
+    ["ticket_price","Ticket price (Naira)","number",false],
+    ["ticket_link","Ticket purchase link","url",false],
+    ["organizer_name","Organizer name","text",true],
+    ["whatsapp","Organizer WhatsApp number","tel",false]
+  ],
+
+  shopping_listings: [
+    ["store_name","Store name","text",true],
+    ["shopping_category","Shopping category","text",true],
+    ["location","Store location","text",true],
+    ["description","Store / Product description","textarea",true],
+    ["product_name","Product name","text",false],
+    ["price","Product price (Naira)","number",false],
+    ["contact_name","Contact person's name","text",false],
+    ["whatsapp","WhatsApp number","tel",true],
+    ["delivery_available","Do you offer delivery?","checkbox",false]
+  ]
+};
+
+function renderFields() {
+  const category = document.getElementById("category").value;
+  const container = document.getElementById("dynamicFields");
+
+  container.innerHTML = fieldSets[category].map(field => {
+    const [name,label,type,required] = field;
+    const req = required ? "required" : "";
+
+    if (type === "textarea") {
+      return `<label for="${name}">${label}${required ? " *" : ""}</label>
+        <textarea id="${name}" name="${name}" ${req}></textarea>`;
+    }
+
+    if (type === "checkbox") {
+      return `<label for="${name}">${label}</label>
+        <input id="${name}" name="${name}" type="checkbox"
+        style="width:auto;transform:scale(1.2)">`;
+    }
+
+    return `<label for="${name}">${label}${required ? " *" : ""}</label>
+      <input id="${name}" name="${name}" type="${type}"
+      ${type === "number" ? 'min="0" step="any"' : ""}
+      ${req}>`;
+  }).join("");
+}
+
+document.getElementById("category").addEventListener("change",renderFields);
+
+async function startPage() {
+  const {data:{session},error} = await db.auth.getSession();
+
+  document.getElementById("loading").style.display = "none";
+
+  if (error || !session) {
+    document.getElementById("message").innerHTML =
+      '<p class="error">Please sign in to your Lagos Connect account before adding a listing. <a href="account.html">Sign in here</a>.</p>';
+    return;
+  }
+
+  currentUser = session.user;
+  renderFields();
+  document.getElementById("listingForm").style.display = "block";
+}
+
+function showMessage(message,type) {
+  const box = document.getElementById("message");
+  box.className = type;
+  box.textContent = message;
+}
+
+document.getElementById("listingForm").addEventListener("submit",async event => {
+  event.preventDefault();
+
+  if (!currentUser) {
+    showMessage("Please sign in before submitting.","error");
+    return;
+  }
+
+  const button = document.getElementById("submitBtn");
+  const category = document.getElementById("category").value;
+  const files = Array.from(document.getElementById("photos").files);
+
+  if (files.length > 5) {
+    showMessage("Please select no more than 5 photos.","error");
+    return;
+  }
+
+  if (files.some(file => !file.type.startsWith("image/") || file.size > 5*1024*1024)) {
+    showMessage("Every file must be an image no larger than 5MB.","error");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Submitting...";
+  showMessage("Preparing your listing...","");
+
+  try {
+    const formData = new FormData(event.target);
+    const record = {
+      owner_id:currentUser.id,
+      status:"pending"
+    };
+
+    for (const field of fieldSets[category]) {
+      const [name,,type] = field;
+      const element = document.getElementById(name);
+
+      if (type === "checkbox") {
+        record[name] = element.checked;
+      } else if (element.value.trim() !== "") {
+        record[name] = type === "number"
+          ? Number(element.value)
+          : element.value.trim();
+      }
+    }
+
+    if (category === "listings") {
+      record.featured = false;
+    }
+
+    const imageUrls = [];
+
+    for (const file of files) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const path = currentUser.id + "/" + crypto.randomUUID() + "-" + safeName;
+
+      const {error:uploadError} = await db.storage
+        .from("listing-images")
+        .upload(path,file,{upsert:false});
+
+      if (uploadError) throw uploadError;
+
+      const {data:urlData} = db.storage
+        .from("listing-images")
+        .getPublicUrl(path);
+
+      imageUrls.push(urlData.publicUrl);
+    }
+
+    record.images = imageUrls;
+
+    if (category === "listings" && imageUrls.length) {
+      record.image_url = imageUrls[0];
+    }
+
+    const {error:insertError} = await db
+      .from(category)
+      .insert(record);
+
+    if (insertError) throw insertError;
+
+    event.target.reset();
+    renderFields();
+
+    showMessage(
+      "Success! Your listing has been submitted and is waiting for administrator approval.",
+      "success"
+    );
+
+  } catch(error) {
+    console.error("Listing submission error:",error);
+    showMessage(
+      "We could not submit your listing. " + (error.message || "Please try again."),
+      "error"
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = "Submit Listing";
+  }
+});
+
+startPage();
+</script>
+</body>
+</html>

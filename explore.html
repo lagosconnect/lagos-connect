@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore | Lagos Connect</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f6f8f7;color:#17251f}
+header{background:white;padding:18px 7%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e8eeea}
+.logo{color:#087c50;font-size:23px;font-weight:800;text-decoration:none}
+nav{display:flex;gap:25px}
+nav a{text-decoration:none;color:#42534a;font-size:14px;font-weight:600}
+nav a:hover{color:#087c50}
+.hero{background:#087c50;color:white;padding:65px 7% 55px;text-align:center}
+.hero h1{font-size:36px;margin-bottom:12px}
+.hero p{font-size:15px;opacity:.9;margin-bottom:28px}
+.search-box{max-width:650px;margin:auto;display:flex;background:white;padding:7px;border-radius:10px}
+.search-box input{flex:1;border:none;outline:none;padding:13px;font-size:15px;min-width:0}
+.search-box button{background:#087c50;color:white;border:none;padding:0 22px;border-radius:7px;cursor:pointer;font-weight:bold}
+.container{max-width:1250px;margin:auto;padding:35px 7%}
+.section-heading{margin-bottom:20px}
+.section-heading h2{font-size:23px;margin-bottom:7px}
+.section-heading p{color:#78857e;font-size:14px}
+.categories{display:flex;gap:10px;overflow-x:auto;padding-bottom:15px;margin-bottom:20px}
+.category-btn{border:1px solid #dce5df;background:white;color:#43534a;padding:11px 18px;border-radius:25px;cursor:pointer;white-space:nowrap;font-weight:600}
+.category-btn.active,.category-btn:hover{background:#087c50;color:white;border-color:#087c50}
+.filter-row{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.filter-row select{padding:12px 15px;border:1px solid #dce5df;border-radius:9px;background:white;color:#43534a;font-size:13px;outline:none;min-width:200px;cursor:pointer}
+.filter-row select:focus{border-color:#087c50}
+.results-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px}
+.results-info h3{font-size:18px}
+.results-info span{color:#78857e;font-size:13px}
+.listings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.listing-card{background:white;border:1px solid #e7ece8;border-radius:12px;overflow:hidden;transition:.2s}
+.listing-card:hover{transform:translateY(-4px);box-shadow:0 8px 25px rgba(0,0,0,.07)}
+.listing-image{width:100%;height:190px;object-fit:cover;background:#e9efeb}
+.card-content{padding:17px}
+.category-label{color:#087c50;font-size:11px;font-weight:800;text-transform:uppercase}
+.card-content h3{margin:9px 0;font-size:17px}
+.description{color:#748078;font-size:13px;line-height:1.6;min-height:40px}
+.location{color:#64736a;font-size:12px;margin-top:13px}
+.empty-state{text-align:center;padding:55px 15px;color:#78857e;background:white;border-radius:12px;grid-column:1/-1}
+.empty-state h3{color:#25372d;margin-bottom:8px}
+
+.load-more-container{text-align:center;margin-top:30px}
+.load-more-btn{background:#087c50;color:white;border:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;transition:.2s}
+.load-more-btn:hover{background:#066640}
+.load-more-btn:disabled{opacity:.6;cursor:not-allowed}
+
+footer{text-align:center;padding:25px;color:#78857e;font-size:13px;border-top:1px solid #e8eeea;margin-top:50px}
+
+@media(max-width:850px){
+.listings-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:550px){
+header{padding:17px 5%}
+nav{gap:13px}
+nav a{font-size:12px}
+.hero{padding:48px 5%}
+.hero h1{font-size:27px}
+.container{padding:28px 5%}
+.listings-grid{grid-template-columns:1fr}
+.search-box button{padding:0 13px}
+.filter-row select{width:100%}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<a href="index.html" class="logo">Lagos Connect</a>
+<nav>
+<a href="index.html">Home</a>
+<a href="explore.html">Explore</a>
+<a href="account.html">Account</a>
+</nav>
+</header>
+
+<section class="hero">
+<h1>Explore Lagos</h1>
+<p>Discover businesses, services, opportunities and more around you.</p>
+
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="Search businesses, jobs, properties...">
+<button id="searchButton">Search</button>
+</div>
+</section>
+
+<main class="container">
+
+<div class="section-heading">
+<h2>Explore by category</h2>
+<p>Find exactly what you're looking for.</p>
+</div>
+
+<div class="categories">
+<button class="category-btn active" data-category="All">All</button>
+<button class="category-btn" data-category="Businesses">Businesses</button>
+<button class="category-btn" data-category="Food & Restaurants">Food & Restaurants</button>
+<button class="category-btn" data-category="Housing">Housing</button>
+<button class="category-btn" data-category="Jobs">Jobs</button>
+<button class="category-btn" data-category="Services">Services</button>
+<button class="category-btn" data-category="Events">Events</button>
+<button class="category-btn" data-category="Shopping">Shopping</button>
+</div>
+
+<div class="filter-row">
+<select id="locationFilter">
+<option value="All">All locations</option>
+</select>
+</div>
+
+<div class="results-info">
+<h3>Discover listings</h3>
+<span id="resultCount">Loading listings...</span>
+</div>
+
+<div class="listings-grid" id="listingsGrid">
+<div class="empty-state">
+<h3>Loading listings...</h3>
+<p>Please wait while we find approved listings.</p>
+</div>
+</div>
+
+<div class="load-more-container" id="loadMoreContainer" style="display:none">
+<button class="load-more-btn" id="loadMoreButton">Load More</button>
+</div>
+
+</main>
+
+<footer>
+© 2026 Lagos Connect. Connecting Lagos to opportunities.
+</footer>
+
+<script>
+const SUPABASE_URL = "https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const categoryInfo = {
+    "Businesses": { table: "listings", icon: "🏢" },
+    "Food & Restaurants": { table: "food_restaurants", icon: "🍽️" },
+    "Housing": { table: "property_listings", icon: "🏠" },
+    "Jobs": { table: "job_listings", icon: "💼" },
+    "Services": { table: "service_listings", icon: "🛠️" },
+    "Events": { table: "event_listings", icon: "🎉" },
+    "Shopping": { table: "shopping_listings", icon: "🛍️" }
+};
+
+let allListings = [];
+let filteredListings = [];
+let selectedCategory = "All";
+
+const LISTINGS_PER_PAGE = 9;
+let visibleCount = LISTINGS_PER_PAGE;
+
+function clean(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    }[char]));
+}
+
+function getValue(item, fields) {
+    for (const field of fields) {
+        if (item[field] !== undefined && item[field] !== null && item[field] !== "") {
+            return item[field];
+        }
+    }
+    return "";
+}
+
+function getImage(item) {
+    let images = getValue(item, ["images", "photos", "image_url", "photo", "cover_image"]);
+
+    if (Array.isArray(images)) {
+        images = images[0];
+    }
+
+    if (typeof images === "string" && images.trim()) {
+        try {
+            const parsed = JSON.parse(images);
+            if (Array.isArray(parsed)) images = parsed[0];
+        } catch (error) {}
+    }
+
+    if (typeof images === "string" && images.startsWith("http")) {
+        return images;
+    }
+
+    return "";
+}
+
+function normalize(row, category) {
+    const title = getValue(row, [
+        "title", "business_name", "store_name",
+        "event_name", "company_name", "name",
+        "product_name", "job_title"
+    ]) || "Untitled listing";
+
+    const location = getValue(row, [
+        "location", "work_location", "venue",
+        "address", "business_address", "area"
+    ]) || "Location not provided";
+
+    const description = getValue(row, [
+        "description", "details", "about", "business_description"
+    ]) || "Contact the provider for more information.";
+
+    return {
+        id: row.id,
+        table: categoryInfo[category].table,
+        category: category,
+        icon: categoryInfo[category].icon,
+        title: title,
+        location: location,
+        description: description,
+        image: getImage(row),
+        searchText: [
+            title, location, description, category,
+            row.category, row.food_type, row.service_category,
+            row.shopping_category, row.property_type,
+            row.event_category, row.company_name
+        ].join(" ").toLowerCase()
+    };
+}
+
+async function loadTable(category) {
+    const table = categoryInfo[category].table;
+
+    const { data, error } = await db
+        .from(table)
+        .select("*")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(60);
+
+    if (error) {
+        console.error("Error loading " + table + ":", error.message);
+        return [];
+    }
+
+    return (data || []).map(row => normalize(row, category));
+}
+
+function populateLocations() {
+    const locationFilter = document.getElementById("locationFilter");
+
+    const locations = [...new Set(
+        allListings
+            .map(item => item.location.trim())
+            .filter(location =>
+                location &&
+                location.toLowerCase() !== "location not provided"
+            )
+    )].sort((a, b) => a.localeCompare(b));
+
+    locationFilter.innerHTML =
+        '<option value="All">All locations</option>';
+
+    locations.forEach(location => {
+        const option = document.createElement("option");
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+async function loadListings() {
+    const grid = document.getElementById("listingsGrid");
+    const count = document.getElementById("resultCount");
+
+    count.textContent = "Loading listings...";
+
+    try {
+        const categories = Object.keys(categoryInfo);
+
+        const results = await Promise.all(
+            categories.map(category => loadTable(category))
+        );
+
+        allListings = results.flat();
+
+        populateLocations();
+
+        applyFilters();
+
+    } catch (error) {
+        console.error("Explore loading error:", error);
+
+        count.textContent = "Unable to load listings";
+
+        grid.innerHTML = `
+            <div class="empty-state">
+                <h3>Something went wrong</h3>
+                <p>Please refresh the page and try again.</p>
+            </div>
+        `;
+    }
+}
+
+function renderListings() {
+    const grid = document.getElementById("listingsGrid");
+    const count = document.getElementById("resultCount");
+    const loadMoreContainer = document.getElementById("loadMoreContainer");
+
+    const total = filteredListings.length;
+    const visibleListings = filteredListings.slice(0, visibleCount);
+
+    count.textContent = total === visibleListings.length
+        ? total + " listings found"
+        : "Showing " + visibleListings.length + " of " + total + " listings";
+
+    if (!total) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <h3>No approved listings found</h3>
+                <p>Try another search, location or category.</p>
+            </div>
+        `;
+
+        loadMoreContainer.style.display = "none";
+        return;
+    }
+
+    grid.innerHTML = visibleListings.map(item => {
+        const image = item.image
+            ? `<img class="listing-image" src="${clean(item.image)}" alt="${clean(item.title)}" loading="lazy" onerror="this.style.display='none'">`
+            : `<div class="listing-image" style="display:flex;align-items:center;justify-content:center;font-size:45px">${item.icon}</div>`;
+
+        return `
+            <article class="listing-card">
+                ${image}
+                <div class="card-content">
+                    <span class="category-label">${clean(item.category)}</span>
+                    <h3>${clean(item.title)}</h3>
+                    <p class="description">${clean(item.description)}</p>
+                    <p class="location">📍 ${clean(item.location)}</p>
+                </div>
+            </article>
+        `;
+    }).join("");
+
+    loadMoreContainer.style.display =
+        visibleCount < total ? "block" : "none";
+}
+
+function applyFilters() {
+    const search = document.getElementById("searchInput")
+        .value.trim().toLowerCase();
+
+    const selectedLocation =
+        document.getElementById("locationFilter").value;
+
+    let filtered = allListings;
+
+    if (selectedCategory !== "All") {
+        filtered = filtered.filter(item =>
+            item.category === selectedCategory
+        );
+    }
+
+    if (selectedLocation !== "All") {
+        filtered = filtered.filter(item =>
+            item.location.trim() === selectedLocation
+        );
+    }
+
+    if (search) {
+        filtered = filtered.filter(item =>
+            item.searchText.includes(search)
+        );
+    }
+
+    filteredListings = filtered;
+    visibleCount = LISTINGS_PER_PAGE;
+
+    renderListings();
+}
+
+document.getElementById("loadMoreButton").addEventListener("click", () => {
+    visibleCount += LISTINGS_PER_PAGE;
+    renderListings();
+});
+
+document.querySelectorAll(".category-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".category-btn").forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+        button.classList.add("active");
+        selectedCategory = button.dataset.category;
+
+        applyFilters();
+    });
+});
+
+document.getElementById("searchInput").addEventListener(
+    "input", applyFilters
+);
+
+document.getElementById("searchButton").addEventListener(
+    "click", applyFilters
+);
+
+document.getElementById("locationFilter").addEventListener(
+    "change", applyFilters
+);
+
+loadListings();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,565 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagos Connect | List Your Business</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f5f8f6;
+  color: #18372a;
+}
+
+header {
+  background: white;
+  padding: 20px 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 15px #00000008;
+}
+
+.logo {
+  color: #087b50;
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+nav {
+  display: flex;
+  gap: 25px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #405248;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #087b50;
+}
+
+.hero {
+  background: linear-gradient(120deg, #064b34, #087b50, #0c9865);
+  padding: 65px 7%;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border: 1px solid #ffffff35;
+  border-radius: 50%;
+  right: 8%;
+  top: -100px;
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  animation: appear .8s ease;
+}
+
+.hero-tag {
+  display: inline-block;
+  background: #ffffff20;
+  border: 1px solid #ffffff35;
+  padding: 9px 15px;
+  border-radius: 30px;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.15;
+  margin-bottom: 17px;
+  letter-spacing: -2px;
+}
+
+.hero p {
+  color: #d9eee4;
+  line-height: 1.8;
+  max-width: 520px;
+  font-size: 15px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 45px auto 75px;
+  padding: 0 20px;
+  animation: appear .9s ease;
+}
+
+.form-card {
+  background: white;
+  border: 1px solid #e6eee8;
+  border-radius: 18px;
+  padding: 38px;
+  box-shadow: 0 15px 45px #173d290b;
+}
+
+.form-heading {
+  margin-bottom: 30px;
+}
+
+.form-heading h2 {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.form-heading p {
+  color: #829087;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #087b50;
+  margin: 28px 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf1ee;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.field {
+  margin-bottom: 20px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+label {
+  display: block;
+  margin-bottom: 9px;
+  color: #34483d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #dce6df;
+  border-radius: 9px;
+  background: #fbfdfb;
+  outline: none;
+  font-size: 14px;
+  color: #263d30;
+  transition: .25s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #087b50;
+  box-shadow: 0 0 0 4px #087b5012;
+  background: white;
+}
+
+textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.hint {
+  color: #98a49c;
+  font-size: 11px;
+  margin-top: 7px;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 17px;
+  background: linear-gradient(110deg, #087b50, #0b9c68);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: .25s;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px #087b5030;
+}
+
+.submit-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.notice {
+  background: #eff8f2;
+  border: 1px solid #d8eee0;
+  color: #39704f;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 22px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+#message {
+  display: none;
+  padding: 15px;
+  border-radius: 9px;
+  margin-top: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+#message.show {
+  display: block;
+}
+
+#message.success {
+  background: #eaf8f0;
+  color: #087b50;
+}
+
+#message.error {
+  background: #fff0ee;
+  color: #b42318;
+}
+
+#loading {
+  text-align: center;
+  padding: 70px 20px;
+  color: #087b50;
+  font-weight: bold;
+}
+
+#submissionArea {
+  display: none;
+}
+
+footer {
+  background: #073d2c;
+  color: #c8ddd2;
+  padding: 30px 7%;
+  text-align: center;
+  font-size: 13px;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(25px); }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media(max-width: 650px) {
+  header {
+    padding: 17px 5%;
+  }
+
+  .logo {
+    font-size: 19px;
+  }
+
+  nav {
+    gap: 12px;
+  }
+
+  nav a {
+    font-size: 11px;
+  }
+
+  .hero {
+    padding: 45px 6%;
+  }
+
+  .container {
+    margin-top: 25px;
+  }
+
+  .form-card {
+    padding: 25px 19px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .field.full {
+    grid-column: auto;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">LAGOS CONNECT.</div>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="account.html">Account</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">BUSINESS REGISTRATION</div>
+
+    <h1>Put Your Business<br>On The Map.</h1>
+
+    <p>
+      Reach more customers, increase your visibility and connect
+      your business with opportunities across Lagos.
+    </p>
+  </div>
+</section>
+
+<div id="loading">
+  Checking your account...
+</div>
+
+<main class="container" id="submissionArea">
+
+  <div class="form-card">
+
+    <div class="form-heading">
+      <h2>List Your Business</h2>
+      <p>
+        Complete the details below to introduce your business
+        to the Lagos Connect community.
+      </p>
+    </div>
+
+    <form id="businessForm">
+
+      <div class="section-title">01 — Business Information</div>
+
+      <div class="grid">
+
+        <div class="field full">
+          <label for="businessName">Business Name *</label>
+          <input id="businessName" type="text"
+            placeholder="Enter your business name" required>
+        </div>
+
+        <div class="field">
+          <label for="category">Business Category *</label>
+          <select id="category" required>
+            <option value="">Choose a category</option>
+            <option value="Food">Food</option>
+            <option value="Housing">Housing</option>
+            <option value="Transport">Transport</option>
+            <option value="Services">Services</option>
+            <option value="Jobs">Jobs</option>
+            <option value="Events">Events</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="location">Business Location *</label>
+          <input id="location" type="text"
+            placeholder="e.g. Ikeja, Lagos" required>
+        </div>
+
+        <div class="field full">
+          <label for="description">Business Description *</label>
+          <textarea id="description"
+            placeholder="Tell customers what your business offers..."
+            required></textarea>
+          <p class="hint">Write a clear description of your products or services.</p>
+        </div>
+
+        <div class="field full">
+          <label for="price">Price / Price Range (Optional)</label>
+          <input id="price" type="text"
+            placeholder="e.g. From ₦5,000 or Contact for pricing">
+        </div>
+
+      </div>
+
+      <div class="section-title">02 — Contact Information</div>
+
+      <div class="grid">
+
+        <div class="field">
+          <label for="contactName">Contact Person *</label>
+          <input id="contactName" type="text"
+            placeholder="Your name" required>
+        </div>
+
+        <div class="field">
+          <label for="whatsapp">WhatsApp Number *</label>
+          <input id="whatsapp" type="tel"
+            placeholder="e.g. 08012345678" required>
+          <p class="hint">Use a number customers can contact.</p>
+        </div>
+
+      </div>
+
+      <div class="notice">
+        <strong>What happens next?</strong><br>
+        Your business will be submitted for review. Once approved,
+        it can appear publicly on Lagos Connect.
+      </div>
+
+      <button class="submit-button" id="submitButton" type="submit">
+        Submit Business Listing →
+      </button>
+
+      <p id="message" aria-live="polite"></p>
+
+    </form>
+
+  </div>
+
+</main>
+
+<footer>
+  © 2026 Lagos Connect. Connecting Lagos, one business at a time.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const loading = document.getElementById("loading");
+const submissionArea = document.getElementById("submissionArea");
+const form = document.getElementById("businessForm");
+const button = document.getElementById("submitButton");
+const message = document.getElementById("message");
+
+let currentUser = null;
+
+function showMessage(text, type) {
+  message.textContent = text;
+  message.className = "show " + type;
+}
+
+async function checkLogin() {
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+      window.location.href = "account.html";
+      return;
+    }
+
+    currentUser = data.user;
+
+    loading.style.display = "none";
+    submissionArea.style.display = "block";
+
+  } catch (error) {
+    loading.textContent = "Unable to verify your account. Please refresh the page.";
+  }
+}
+
+checkLogin();
+
+form.addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  if (!currentUser) {
+    window.location.href = "account.html";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Submitting your business...";
+
+  showMessage("Please wait while we submit your listing.", "success");
+
+  try {
+    const listing = {
+      owner_id: currentUser.id,
+      title: document.getElementById("businessName").value.trim(),
+      category: document.getElementById("category").value,
+      location: document.getElementById("location").value.trim(),
+      description: document.getElementById("description").value.trim(),
+      price: document.getElementById("price").value.trim() || null,
+      whatsapp: document.getElementById("whatsapp").value.trim(),
+      contact_name: document.getElementById("contactName").value.trim(),
+      status: "pending"
+    };
+
+    const { error } = await supabaseClient
+      .from("listings")
+      .insert([listing]);
+
+    if (error) throw error;
+
+    showMessage(
+      "Your business has been submitted successfully! It is now awaiting review and approval. Thank you for choosing Lagos Connect.",
+      "success"
+    );
+
+    form.reset();
+
+  } catch (error) {
+    showMessage(
+      "We could not submit your listing: " + error.message,
+      "error"
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent = "Submit Business Listing →";
+  }
+});
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT" || !session) {
+    window.location.href = "account.html";
+  }
+});
+</script>
+
+</body>
+</html>

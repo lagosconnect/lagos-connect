@@ -1,0 +1,579 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | Lagos Connect</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --green:#087c50;
+  --dark:#10251e;
+  --muted:#75827c;
+  --line:#e8eee9;
+  --bg:#f5f8f5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--dark);
+  min-height:100vh;
+}
+button,input{font:inherit}
+.page{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+.visual{
+  min-height:100vh;
+  padding:38px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
+  color:white;
+  background:
+    linear-gradient(180deg,rgba(4,25,18,.25),rgba(4,25,18,.88)),
+    url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1400&q=85') center/cover;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-family:'Manrope',sans-serif;
+  font-size:21px;
+  font-weight:800;
+  letter-spacing:-.7px;
+}
+.brand-mark{
+  width:39px;height:39px;
+  display:grid;place-items:center;
+  background:#fff;color:var(--green);
+  border-radius:12px;
+  font-weight:900;font-size:21px;
+}
+.visual-content{max-width:510px;position:relative;z-index:1}
+.visual-content .tag{
+  display:inline-flex;
+  padding:9px 14px;
+  border:1px solid #ffffff55;
+  background:#ffffff18;
+  backdrop-filter:blur(10px);
+  border-radius:30px;
+  font-size:12px;
+  margin-bottom:22px;
+}
+.visual h1{
+  font-family:'Manrope',sans-serif;
+  font-size:clamp(38px,5vw,65px);
+  line-height:1.08;
+  letter-spacing:-2.8px;
+  margin-bottom:19px;
+}
+.visual h1 span{color:#85e0b2}
+.visual-content p{
+  color:#e1eee7;
+  font-size:16px;
+  line-height:1.8;
+  max-width:420px;
+}
+.visual-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#d9e9df;
+  font-size:12px;
+}
+.visual-dots{display:flex;gap:6px}
+.visual-dots i{
+  display:block;width:7px;height:7px;border-radius:10px;background:#ffffff70
+}
+.visual-dots i:first-child{width:23px;background:#85e0b2}
+.form-side{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 28px;
+  background:#fff;
+}
+.form-wrap{width:100%;max-width:430px}
+.mobile-brand{display:none}
+.welcome{margin-bottom:30px}
+.welcome .eyebrow{
+  color:var(--green);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-bottom:12px;
+}
+.welcome h2{
+  font-family:'Manrope',sans-serif;
+  font-size:34px;
+  letter-spacing:-1.4px;
+  margin-bottom:9px;
+}
+.welcome p{color:var(--muted);font-size:14px;line-height:1.7}
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  background:#f2f5f2;
+  padding:5px;
+  border-radius:12px;
+  margin-bottom:25px;
+}
+.tab{
+  border:0;background:transparent;padding:12px;
+  color:#75827c;font-weight:700;
+  border-radius:9px;cursor:pointer;
+  transition:.2s;
+}
+.tab.active{
+  background:#fff;color:var(--green);
+  box-shadow:0 2px 9px #10251e0d;
+}
+.field{margin-bottom:17px}
+.field label{
+  display:block;font-size:13px;font-weight:700;
+  margin-bottom:8px;color:#304139;
+}
+.field input{
+  width:100%;height:51px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:0 15px;
+  outline:none;
+  color:var(--dark);
+  background:#fff;
+  transition:.2s;
+}
+.field input:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px #087c5014;
+}
+.field input::placeholder{color:#aab4ae}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:70px}
+.show-password{
+  position:absolute;right:13px;top:50%;
+  transform:translateY(-50%);
+  border:0;background:none;color:var(--green);
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.form-extra{
+  display:flex;justify-content:flex-end;
+  margin:0 0 20px;
+}
+.form-extra button{
+  border:0;background:none;color:var(--green);
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.submit{
+  width:100%;height:53px;border:0;
+  border-radius:10px;background:var(--green);
+  color:white;font-weight:800;
+  cursor:pointer;
+  box-shadow:0 8px 20px #087c5026;
+  transition:.2s;
+}
+.submit:hover{background:#066b45;transform:translateY(-1px)}
+.submit:disabled{opacity:.65;cursor:wait;transform:none}
+.message{
+  display:none;margin-top:16px;padding:13px;
+  border-radius:9px;font-size:13px;line-height:1.5;
+}
+.message.show{display:block}
+.message.error{background:#fff0ef;color:#b42318}
+.message.success{background:#eaf8ef;color:#12683e}
+.terms{
+  text-align:center;color:#929d96;
+  font-size:11px;line-height:1.7;margin-top:22px;
+}
+.terms strong{color:#52645a}
+.footer{
+  margin-top:34px;padding-top:20px;
+  border-top:1px solid var(--line);
+  text-align:center;color:#9aa59e;font-size:12px;
+}
+@media(max-width:850px){
+  .page{grid-template-columns:1fr}
+  .visual{display:none}
+  .form-side{min-height:100vh;padding:30px 22px}
+  .mobile-brand{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Manrope',sans-serif;font-weight:800;
+    font-size:19px;margin-bottom:45px;
+  }
+  .mobile-brand .brand-mark{background:var(--green);color:white}
+}
+@media(max-width:420px){
+  .welcome h2{font-size:29px}
+  .form-side{padding:25px 19px}
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+  <section class="visual">
+    <div class="brand">
+      <div class="brand-mark">L</div>
+      LAGOS CONNECT
+    </div>
+
+    <div class="visual-content">
+      <div class="tag">YOUR CITY. YOUR CONNECTIONS.</div>
+      <h1>Discover more.<br>Connect <span>better.</span></h1>
+      <p>
+        Find businesses, discover great places to eat, explore homes,
+        find opportunities and connect with services across Lagos.
+        Everything starts here.
+      </p>
+    </div>
+
+    <div class="visual-bottom">
+      <span>Connecting Lagos, one discovery at a time.</span>
+      <div class="visual-dots"><i></i><i></i><i></i></div>
+    </div>
+  </section>
+
+  <main class="form-side">
+    <div class="form-wrap">
+
+      <div class="mobile-brand">
+        <div class="brand-mark">L</div>
+        LAGOS CONNECT
+      </div>
+
+      <div class="welcome">
+        <div class="eyebrow">WELCOME TO LAGOS CONNECT</div>
+        <h2 id="heading">Welcome back.</h2>
+        <p id="subheading">Sign in to continue exploring and managing your account.</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="loginTab" type="button">Sign in</button>
+        <button class="tab" id="signupTab" type="button">Create account</button>
+      </div>
+
+      <form id="authForm">
+        <div class="field" id="nameField" style="display:none">
+          <label for="fullName">Full name</label>
+          <input id="fullName" type="text" placeholder="Enter your full name" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required minlength="6">
+            <button class="show-password" type="button" id="togglePassword">Show</button>
+          </div>
+        </div>
+
+        <div class="field" id="confirmPasswordField" style="display:none">
+          <label for="confirmPassword">Confirm new password</label>
+          <input id="confirmPassword" type="password" placeholder="Re-enter your new password" autocomplete="new-password" minlength="6">
+        </div>
+
+        <div class="form-extra" id="forgotRow">
+          <button type="button" id="forgotPassword">Forgot password?</button>
+        </div>
+
+        <button class="submit" id="submitButton" type="submit">Sign in to your account</button>
+        <div class="message" id="message" role="status"></div>
+      </form>
+
+      <div class="terms">
+        By continuing, you agree to use Lagos Connect responsibly.
+        <br><strong>Discover. Connect. Grow.</strong>
+      </div>
+
+      <div class="footer">
+        © 2026 Lagos Connect. All rights reserved.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = "https://qiqubdruzuuojjpmizgw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-aKXLemsKGZWLILbuA95yg_bPbiVqgQ";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
+
+const form = document.getElementById("authForm");
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
+const tabs = document.querySelector(".tabs");
+const heading = document.getElementById("heading");
+const subheading = document.getElementById("subheading");
+const nameField = document.getElementById("nameField");
+const fullName = document.getElementById("fullName");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const confirmPassword = document.getElementById("confirmPassword");
+const confirmPasswordField = document.getElementById("confirmPasswordField");
+const submitButton = document.getElementById("submitButton");
+const message = document.getElementById("message");
+const forgotRow = document.getElementById("forgotRow");
+
+let mode = "login";
+let recoveryFlow = new URLSearchParams(window.location.search).get("type") === "recovery"
+  || window.location.hash.includes("type=recovery");
+
+function showMessage(text, type) {
+  message.textContent = text;
+  message.className = "message show " + type;
+}
+
+function clearMessage() {
+  message.textContent = "";
+  message.className = "message";
+}
+
+// Use the exact page URL, including its actual capitalization (Account.html).
+function currentAccountUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  const signup = mode === "signup";
+  const reset = mode === "reset";
+
+  tabs.style.display = reset ? "none" : "grid";
+  loginTab.classList.toggle("active", mode === "login");
+  signupTab.classList.toggle("active", signup);
+
+  heading.textContent = reset
+    ? "Create a new password."
+    : signup ? "Create your account." : "Welcome back.";
+
+  subheading.textContent = reset
+    ? "Choose a new password for your Lagos Connect account."
+    : signup
+      ? "Join Lagos Connect and start discovering opportunities."
+      : "Sign in to continue exploring and managing your account.";
+
+  nameField.style.display = signup ? "block" : "none";
+  fullName.required = signup;
+  confirmPasswordField.style.display = reset ? "block" : "none";
+  confirmPassword.required = reset;
+  forgotRow.style.display = mode === "login" ? "flex" : "none";
+  password.autocomplete = signup || reset ? "new-password" : "current-password";
+  password.placeholder = reset ? "Enter your new password" : "Enter your password";
+  password.value = "";
+  confirmPassword.value = "";
+  submitButton.textContent = reset
+    ? "Update password"
+    : signup ? "Create my account" : "Sign in to your account";
+  clearMessage();
+}
+
+loginTab.addEventListener("click", () => setMode("login"));
+signupTab.addEventListener("click", () => setMode("signup"));
+
+document.getElementById("togglePassword").addEventListener("click", function() {
+  const visible = password.type === "text";
+  password.type = visible ? "password" : "text";
+  this.textContent = visible ? "Show" : "Hide";
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearMessage();
+
+  const userEmail = email.value.trim();
+  const userPassword = password.value;
+  const name = fullName.value.trim();
+
+  if (!userEmail) {
+    showMessage("Please enter your email address.", "error");
+    email.focus();
+    return;
+  }
+
+  if (userPassword.length < 6) {
+    showMessage("Your password must contain at least 6 characters.", "error");
+    password.focus();
+    return;
+  }
+
+  if (mode === "signup" && !name) {
+    showMessage("Please enter your full name.", "error");
+    fullName.focus();
+    return;
+  }
+
+  if (mode === "reset" && userPassword !== confirmPassword.value) {
+    showMessage("Your passwords do not match. Please try again.", "error");
+    confirmPassword.focus();
+    return;
+  }
+
+  submitButton.disabled = true;
+  const originalButtonText = submitButton.textContent;
+  submitButton.textContent = mode === "signup"
+    ? "Creating your account..."
+    : mode === "reset" ? "Updating password..." : "Signing you in...";
+
+  try {
+    if (mode === "signup") {
+      const { data, error } = await db.auth.signUp({
+        email: userEmail,
+        password: userPassword,
+        options: {
+          data: { full_name: name },
+          emailRedirectTo: currentAccountUrl()
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showMessage("Your account is ready. Taking you to your dashboard...", "success");
+        window.location.replace("dashboard.html");
+        return;
+      }
+
+      showMessage(
+        "Your account has been created. We have requested a confirmation email. Check your inbox and spam folder, then open the link on this same computer while Live Server is running.",
+        "success"
+      );
+
+    } else if (mode === "login") {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: userEmail,
+        password: userPassword
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showMessage("Login successful. Opening your dashboard...", "success");
+        window.location.replace("dashboard.html");
+        return;
+      }
+
+      showMessage("We couldn't start a login session. Please confirm your email and try again.", "error");
+
+    } else if (mode === "reset") {
+      const { error } = await db.auth.updateUser({ password: userPassword });
+      if (error) throw error;
+
+      showMessage("Your password has been updated successfully. Taking you to your dashboard...", "success");
+      recoveryFlow = false;
+      window.setTimeout(() => {
+        window.location.replace("dashboard.html");
+      }, 1200);
+      return;
+    }
+  } catch (error) {
+    const errorText = error && error.message ? error.message : "Something went wrong. Please try again.";
+    showMessage(errorText, "error");
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = mode === "reset"
+      ? "Update password"
+      : mode === "signup" ? "Create my account" : "Sign in to your account";
+  }
+});
+
+document.getElementById("forgotPassword").addEventListener("click", async () => {
+  const userEmail = email.value.trim();
+
+  if (!userEmail) {
+    showMessage("Enter your email address first, then click Forgot password.", "error");
+    email.focus();
+    return;
+  }
+
+  const forgotButton = document.getElementById("forgotPassword");
+  forgotButton.disabled = true;
+
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(userEmail, {
+      redirectTo: currentAccountUrl()
+    });
+
+    if (error) throw error;
+
+    showMessage(
+      "If an account exists for this email, a password-reset link has been requested. Check your inbox and spam folder.",
+      "success"
+    );
+  } catch (error) {
+    showMessage(error.message || "Unable to request a password reset.", "error");
+  } finally {
+    forgotButton.disabled = false;
+  }
+});
+
+// Supabase emits PASSWORD_RECOVERY when a valid password-reset link is opened.
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    recoveryFlow = true;
+    setMode("reset");
+    showMessage("Password reset link verified. Enter your new password below.", "success");
+    return;
+  }
+
+  if (event === "SIGNED_IN" && session && !recoveryFlow) {
+    window.location.replace("dashboard.html");
+  }
+});
+
+// Restore and validate an existing browser session. If the user was deleted
+// from Supabase, clear the stale local session instead of redirecting forever.
+(async function initialiseAuthentication() {
+  if (recoveryFlow) {
+    setMode("reset");
+    showMessage("Verifying your password-reset link...", "success");
+  }
+
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+
+    if (data.session && !recoveryFlow) {
+      const { error: userError } = await db.auth.getUser();
+
+      if (userError) {
+        await db.auth.signOut();
+        showMessage("Your saved login session is no longer valid. Please sign in again.", "error");
+        return;
+      }
+
+      window.location.replace("dashboard.html");
+    }
+  } catch (error) {
+    showMessage(
+      "We couldn't verify your saved session. Check your internet connection and try signing in again.",
+      "error"
+    );
+  }
+})();
+</script>
+</body>
+</html>
